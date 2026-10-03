@@ -83,3 +83,25 @@ test("el proceso comienza en estado Nuevo", () => {
 
     expect(proceso.obtenerEstado()).toBe(EstadoProceso.Nuevo);
 });
+test("un proceso Nuevo puede pasar a Esperando Memoria", () => {
+    const proceso = new Proceso(1, 100, 3);
+
+    proceso.esperarMemoria();
+
+    expect(proceso.obtenerEstado()).toBe(
+        EstadoProceso.EsperandoMemoria
+    );
+});
+
+test("rechaza esperar memoria si ya esta esperando", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.esperarMemoria();
+
+    expect(() => proceso.esperarMemoria()).toThrow(
+        "El cambio de estado no esta permitido"
+    );
+
+    expect(proceso.obtenerEstado()).toBe(
+        EstadoProceso.EsperandoMemoria
+    );
+});

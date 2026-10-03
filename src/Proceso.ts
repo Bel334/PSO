@@ -56,4 +56,13 @@ export class Proceso implements IProceso {
     obtenerEstado(): EstadoProceso {
         return this.estado;
     }
+    esperarMemoria(): void {
+    this.estado = this.estado === EstadoProceso.Nuevo
+        ? EstadoProceso.EsperandoMemoria
+        : this.rechazarTransicion();
+}
+
+private rechazarTransicion(): never {
+    throw new Error("El cambio de estado no esta permitido");
+}
 }

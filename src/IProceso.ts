@@ -5,4 +5,5 @@ export interface IProceso {
     obtenerCpuTotal(): number;
     obtenerCpuRestante(): number;
     obtenerEstado(): EstadoProceso;
+    esperarMemoria(): void;
 }
