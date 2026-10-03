@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { Proceso } from "../src/Proceso.js";
-
+import { EstadoProceso } from "../src/EstadoProceso.js";
 test("el proceso guarda el PID recibido", () => {
     const proceso = new Proceso(1, 100, 3);
 
@@ -59,4 +59,27 @@ test("la CPU restante comienza igual a la CPU total", () => {
     const proceso = new Proceso(1, 100, 3);
 
     expect(proceso.obtenerCpuRestante()).toBe(3);
+});
+test("rechaza CPU igual a cero", () => {
+    expect(() => new Proceso(1, 100, 0)).toThrow(
+        "La CPU tiene que ser un entero positivo"
+    );
+});
+
+test("rechaza CPU negativa", () => {
+    expect(() => new Proceso(1, 100, -1)).toThrow(
+        "La CPU tiene que ser un entero positivo"
+    );
+});
+
+test("rechaza CPU decimal", () => {
+    expect(() => new Proceso(1, 100, 1.5)).toThrow(
+        "La CPU tiene que ser un entero positivo"
+    );
+});
+
+test("el proceso comienza en estado Nuevo", () => {
+    const proceso = new Proceso(1, 100, 3);
+
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Nuevo);
 });

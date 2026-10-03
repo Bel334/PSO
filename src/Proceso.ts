@@ -1,10 +1,12 @@
 import type { IProceso } from "./IProceso.js";
+import { EstadoProceso } from "./EstadoProceso.js";
 
 export class Proceso implements IProceso {
     private pid: number;
     private memoriaRequerida: number;
     private cpuTotal: number;
     private cpuRestante: number;
+    private estado: EstadoProceso = EstadoProceso.Nuevo;
 
     constructor(pid: number, memoriaRequerida: number, cpuTotal: number) {
         this.pid = Number.isInteger(pid) && pid > 0
@@ -49,5 +51,9 @@ export class Proceso implements IProceso {
 
     obtenerCpuRestante(): number {
         return this.cpuRestante;
+    }
+
+    obtenerEstado(): EstadoProceso {
+        return this.estado;
     }
 }
