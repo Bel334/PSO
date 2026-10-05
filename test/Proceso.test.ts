@@ -132,3 +132,37 @@ test("un proceso Listo no puede ser admitido otra vez", () => {
 
     expect(proceso.obtenerEstado()).toBe(EstadoProceso.Listo);
 });
+test("un proceso Listo puede pasar a Ejecutando", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.admitir();
+
+    proceso.despachar();
+
+    expect(proceso.obtenerEstado()).toBe(
+        EstadoProceso.Ejecutando
+    );
+    expect(proceso.obtenerCpuRestante()).toBe(3);
+});
+
+test("un proceso Nuevo no puede ser despachado", () => {
+    const proceso = new Proceso(1, 100, 3);
+
+    expect(() => proceso.despachar()).toThrow(
+        "El cambio de estado no esta permitido"
+    );
+
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Nuevo);
+});
+
+test("un proceso esperando memoria no puede ser despachado", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.esperarMemoria();
+
+    expect(() => proceso.despachar()).toThrow(
+        "El cambio de estado no esta permitido"
+    );
+
+    expect(proceso.obtenerEstado()).toBe(
+        EstadoProceso.EsperandoMemoria
+    );
+});

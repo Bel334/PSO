@@ -37,6 +37,10 @@ export class Proceso implements IProceso {
         throw new Error("La CPU tiene que ser un entero positivo");
     }
 
+    private rechazarTransicion(): never {
+        throw new Error("El cambio de estado no esta permitido");
+    }
+
     obtenerPid(): number {
         return this.pid;
     }
@@ -56,22 +60,26 @@ export class Proceso implements IProceso {
     obtenerEstado(): EstadoProceso {
         return this.estado;
     }
+
     esperarMemoria(): void {
-    this.estado = this.estado === EstadoProceso.Nuevo
-        ? EstadoProceso.EsperandoMemoria
-        : this.rechazarTransicion();
-}
+        this.estado = this.estado === EstadoProceso.Nuevo
+            ? EstadoProceso.EsperandoMemoria
+            : this.rechazarTransicion();
+    }
 
-private rechazarTransicion(): never {
-    throw new Error("El cambio de estado no esta permitido");
-}
-admitir(): void {
-    const puedeAdmitirse =
-        this.estado === EstadoProceso.Nuevo ||
-        this.estado === EstadoProceso.EsperandoMemoria;
+    admitir(): void {
+        const puedeAdmitirse =
+            this.estado === EstadoProceso.Nuevo ||
+            this.estado === EstadoProceso.EsperandoMemoria;
 
-    this.estado = puedeAdmitirse
-        ? EstadoProceso.Listo
-        : this.rechazarTransicion();
-}
+        this.estado = puedeAdmitirse
+            ? EstadoProceso.Listo
+            : this.rechazarTransicion();
+    }
+
+    despachar(): void {
+        this.estado = this.estado === EstadoProceso.Listo
+            ? EstadoProceso.Ejecutando
+            : this.rechazarTransicion();
+    }
 }

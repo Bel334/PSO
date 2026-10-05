@@ -7,4 +7,5 @@ export interface IProceso {
     obtenerEstado(): EstadoProceso;
     esperarMemoria(): void;
     admitir(): void;
+    despachar(): void;
 }
