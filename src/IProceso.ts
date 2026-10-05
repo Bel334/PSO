@@ -8,4 +8,6 @@ export interface IProceso {
     esperarMemoria(): void;
     admitir(): void;
     despachar(): void;
+    obtenerQuantumConsumido(): number;
+ejecutarTick(): void;
 }

@@ -40,7 +40,7 @@ export class Proceso implements IProceso {
     private rechazarTransicion(): never {
         throw new Error("El cambio de estado no esta permitido");
     }
-
+    private quantumConsumido: number = 0;
     obtenerPid(): number {
         return this.pid;
     }
@@ -77,9 +77,29 @@ export class Proceso implements IProceso {
             : this.rechazarTransicion();
     }
 
-    despachar(): void {
-        this.estado = this.estado === EstadoProceso.Listo
-            ? EstadoProceso.Ejecutando
-            : this.rechazarTransicion();
-    }
+  despachar(): void {
+    this.estado = this.estado === EstadoProceso.Listo
+        ? EstadoProceso.Ejecutando
+        : this.rechazarTransicion();
+
+    this.quantumConsumido = 0;
+}
+obtenerQuantumConsumido(): number {
+    return this.quantumConsumido;
+}
+
+ejecutarTick(): void {
+    this.estado === EstadoProceso.Ejecutando
+        ? this.consumirCpu()
+        : this.rechazarTransicion();
+}
+
+private consumirCpu(): void {
+    this.cpuRestante--;
+    this.quantumConsumido++;
+
+    this.estado = this.cpuRestante === 0
+        ? EstadoProceso.Terminado
+        : EstadoProceso.Ejecutando;
+}
 }

@@ -166,3 +166,57 @@ test("un proceso esperando memoria no puede ser despachado", () => {
         EstadoProceso.EsperandoMemoria
     );
 });
+test("el quantum consumido comienza en cero", () => {
+    const proceso = new Proceso(1, 100, 3);
+
+    expect(proceso.obtenerQuantumConsumido()).toBe(0);
+});
+
+test("ejecutar un tick consume CPU y quantum", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.admitir();
+    proceso.despachar();
+
+    proceso.ejecutarTick();
+
+    expect(proceso.obtenerCpuRestante()).toBe(2);
+    expect(proceso.obtenerCpuTotal()).toBe(3);
+    expect(proceso.obtenerQuantumConsumido()).toBe(1);
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Ejecutando);
+});
+
+test("termina al consumir toda su CPU", () => {
+    const proceso = new Proceso(1, 100, 1);
+    proceso.admitir();
+    proceso.despachar();
+
+    proceso.ejecutarTick();
+
+    expect(proceso.obtenerCpuRestante()).toBe(0);
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Terminado);
+});
+
+test("un proceso Nuevo no puede consumir CPU", () => {
+    const proceso = new Proceso(1, 100, 3);
+
+    expect(() => proceso.ejecutarTick()).toThrow(
+        "El cambio de estado no esta permitido"
+    );
+
+    expect(proceso.obtenerCpuRestante()).toBe(3);
+    expect(proceso.obtenerQuantumConsumido()).toBe(0);
+});
+
+test("un proceso Terminado no puede seguir consumiendo CPU", () => {
+    const proceso = new Proceso(1, 100, 1);
+    proceso.admitir();
+    proceso.despachar();
+    proceso.ejecutarTick();
+
+    expect(() => proceso.ejecutarTick()).toThrow(
+        "El cambio de estado no esta permitido"
+    );
+
+    expect(proceso.obtenerCpuRestante()).toBe(0);
+    expect(proceso.obtenerQuantumConsumido()).toBe(1);
+});
