@@ -220,3 +220,40 @@ test("un proceso Terminado no puede seguir consumiendo CPU", () => {
     expect(proceso.obtenerCpuRestante()).toBe(0);
     expect(proceso.obtenerQuantumConsumido()).toBe(1);
 });
+test("un proceso Ejecutando puede volver a Listo", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.admitir();
+    proceso.despachar();
+    proceso.ejecutarTick();
+
+    proceso.reencolar();
+
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Listo);
+    expect(proceso.obtenerCpuRestante()).toBe(2);
+});
+
+test("el nuevo despacho reinicia el quantum consumido", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.admitir();
+    proceso.despachar();
+    proceso.ejecutarTick();
+    proceso.reencolar();
+
+    proceso.despachar();
+
+    expect(proceso.obtenerQuantumConsumido()).toBe(0);
+    expect(proceso.obtenerCpuRestante()).toBe(2);
+});
+
+test("un proceso Terminado no puede volver a Listo", () => {
+    const proceso = new Proceso(1, 100, 1);
+    proceso.admitir();
+    proceso.despachar();
+    proceso.ejecutarTick();
+
+    expect(() => proceso.reencolar()).toThrow(
+        "El cambio de estado no esta permitido"
+    );
+
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Terminado);
+});

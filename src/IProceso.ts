@@ -10,4 +10,6 @@ export interface IProceso {
     despachar(): void;
     obtenerQuantumConsumido(): number;
 ejecutarTick(): void;
+reencolar(): void;
+renovarQuantum(): void;
 }

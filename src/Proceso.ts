@@ -102,4 +102,14 @@ private consumirCpu(): void {
         ? EstadoProceso.Terminado
         : EstadoProceso.Ejecutando;
 }
+reencolar(): void {
+    this.estado = this.estado === EstadoProceso.Ejecutando
+        ? EstadoProceso.Listo
+        : this.rechazarTransicion();
+}
+renovarQuantum(): void {
+    this.estado === EstadoProceso.Ejecutando
+        ? this.quantumConsumido = 0
+        : this.rechazarTransicion();
+}
 }
