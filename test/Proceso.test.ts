@@ -105,3 +105,30 @@ test("rechaza esperar memoria si ya esta esperando", () => {
         EstadoProceso.EsperandoMemoria
     );
 });
+test("un proceso Nuevo puede ser admitido", () => {
+    const proceso = new Proceso(1, 100, 3);
+
+    proceso.admitir();
+
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Listo);
+});
+
+test("un proceso en espera de memoria puede ser admitido", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.esperarMemoria();
+
+    proceso.admitir();
+
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Listo);
+});
+
+test("un proceso Listo no puede ser admitido otra vez", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.admitir();
+
+    expect(() => proceso.admitir()).toThrow(
+        "El cambio de estado no esta permitido"
+    );
+
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Listo);
+});

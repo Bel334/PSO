@@ -65,4 +65,13 @@ export class Proceso implements IProceso {
 private rechazarTransicion(): never {
     throw new Error("El cambio de estado no esta permitido");
 }
+admitir(): void {
+    const puedeAdmitirse =
+        this.estado === EstadoProceso.Nuevo ||
+        this.estado === EstadoProceso.EsperandoMemoria;
+
+    this.estado = puedeAdmitirse
+        ? EstadoProceso.Listo
+        : this.rechazarTransicion();
+}
 }
