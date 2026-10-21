@@ -2,8 +2,10 @@ import { EstadoProceso } from "./EstadoProceso.js";
 import { GestorMemoria } from "./GestorMemoria.js";
 import { PlanificadorRoundRobin } from "./PlanificadorRoundRobin.js";
 import { Proceso } from "./Proceso.js";
+import { Metricas } from "./Metricas.js";
 import type { EventoES } from "./EventoES.js";
 import type { IGestorMemoria } from "./IGestorMemoria.js";
+import type { IMetricas, VistaMetricas } from "./IMetricas.js";
 import type {
     IPlanificador,
     ResultadoTickCpu
@@ -18,12 +20,14 @@ import type {
 export class Simulador implements ISimulador {
     private readonly memoria: IGestorMemoria;
     private readonly planificador: IPlanificador;
+    private readonly metricas: IMetricas;
     private readonly procesos: Map<number, IProceso> = new Map();
     private tick: number = 0;
 
     constructor(memoriaTotal: number, quantum: number) {
         this.memoria = new GestorMemoria(memoriaTotal);
         this.planificador = new PlanificadorRoundRobin(quantum);
+        this.metricas = new Metricas(memoriaTotal);
     }
 
     registrarProceso(
@@ -60,8 +64,13 @@ export class Simulador implements ISimulador {
             : this.memoria.liberar(resultado.pidTerminado);
 
         this.tick++;
+        this.metricas.actualizar(resultado, this.memoria.obtenerMapa());
 
         return resultado;
+    }
+
+    consultarMetricas(): VistaMetricas {
+        return this.metricas.consultar();
     }
 
     consultarEstado(): VistaSistema {

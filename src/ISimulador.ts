@@ -2,6 +2,7 @@ import type { EstadoProceso } from "./EstadoProceso.js";
 import type { EventoES } from "./EventoES.js";
 import type { VistaBloque } from "./IGestorMemoria.js";
 import type { ResultadoTickCpu } from "./IPlanificador.js";
+import type { VistaMetricas } from "./IMetricas.js";
 
 export interface VistaProceso {
     readonly pid: number;
@@ -34,4 +35,5 @@ export interface ISimulador {
 
     avanzarTick(): ResultadoTickCpu;
     consultarEstado(): VistaSistema;
+    consultarMetricas(): VistaMetricas;
 }

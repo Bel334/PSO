@@ -151,3 +151,80 @@ test("las consultas no exponen el proceso interno", () => {
     expect(simulador.consultarEstado().procesos[0]?.estado)
         .toBe(EstadoProceso.Nuevo);
 });
+test("las metricas iniciales corresponden al tick cero", () => {
+    const simulador = new Simulador(100, 2);
+
+    expect(simulador.consultarMetricas()).toEqual({
+        ocupacionMemoria: 0,
+        utilizacionCpu: 0,
+        cambiosContexto: 0,
+        memoriaLibreTotal: 100,
+        mayorBloqueLibre: 100,
+        fragmentacionExterna: 0
+    });
+});
+
+test("las metricas se actualizan despues de liberar memoria", () => {
+    const simulador = new Simulador(100, 2);
+    simulador.registrarProceso(1, 100, 1);
+
+    simulador.avanzarTick();
+
+    expect(simulador.consultarMetricas()).toEqual({
+        ocupacionMemoria: 0,
+        utilizacionCpu: 100,
+        cambiosContexto: 0,
+        memoriaLibreTotal: 100,
+        mayorBloqueLibre: 100,
+        fragmentacionExterna: 0
+    });
+});
+
+test("Round-Robin registra un cambio de contexto en el caso minimo", () => {
+    const simulador = new Simulador(200, 2);
+    simulador.registrarProceso(1, 100, 3);
+    simulador.registrarProceso(2, 100, 2);
+
+    Array.from({ length: 5 }, () => simulador.avanzarTick());
+
+    expect(simulador.consultarMetricas().cambiosContexto).toBe(1);
+    expect(simulador.consultarMetricas().utilizacionCpu).toBe(100);
+});
+
+test("la E/S cuenta contexto y los ticks ociosos reducen utilizacion", () => {
+    const simulador = new Simulador(100, 2);
+    simulador.registrarProceso(
+        1, 100, 3,
+        { despuesDeCpu: 1, duracion: 2 }
+    );
+
+    simulador.avanzarTick();
+
+    expect(simulador.consultarMetricas().cambiosContexto).toBe(1);
+    expect(simulador.consultarMetricas().ocupacionMemoria).toBe(100);
+
+    simulador.avanzarTick();
+
+    expect(simulador.consultarMetricas().utilizacionCpu).toBe(50);
+    expect(simulador.consultarMetricas().cambiosContexto).toBe(1);
+});
+
+test("quantum sin otros Listos no suma cambios de contexto", () => {
+    const simulador = new Simulador(100, 1);
+    simulador.registrarProceso(1, 50, 3);
+
+    simulador.avanzarTick();
+    simulador.avanzarTick();
+
+    expect(simulador.consultarMetricas().cambiosContexto).toBe(0);
+    expect(simulador.consultarMetricas().ocupacionMemoria).toBe(50);
+});
+
+test("consultar metricas no avanza el reloj", () => {
+    const simulador = new Simulador(100, 2);
+
+    simulador.consultarMetricas();
+    simulador.consultarMetricas();
+
+    expect(simulador.consultarEstado().tick).toBe(0);
+});
