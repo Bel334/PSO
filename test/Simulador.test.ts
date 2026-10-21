@@ -228,3 +228,82 @@ test("consultar metricas no avanza el reloj", () => {
 
     expect(simulador.consultarEstado().tick).toBe(0);
 });
+test("la admision ocurre antes del retorno de E/S", () => {
+    const simulador = new Simulador(300, 2);
+
+    simulador.registrarProceso(
+        1, 100, 3,
+        { despuesDeCpu: 1, duracion: 1 }
+    );
+    simulador.registrarProceso(2, 100, 3);
+
+    simulador.avanzarTick();
+
+    // En el siguiente tick se admite P3 antes de retornar P1.
+    simulador.registrarProceso(3, 100, 3);
+
+    const resultado = simulador.avanzarTick();
+
+    expect(resultado.pidEjecutado).toBe(2);
+    expect(simulador.consultarEstado().listos).toEqual([3, 1]);
+});
+
+test("mide fragmentacion a partir de la memoria real del simulador", () => {
+    const simulador = new Simulador(500, 1);
+    simulador.registrarProceso(1, 100, 1);
+    simulador.registrarProceso(2, 100, 3);
+
+    simulador.avanzarTick();
+
+    expect(simulador.consultarEstado().memoria).toEqual([
+        { inicio: 0, tamano: 100, pid: null },
+        { inicio: 100, tamano: 100, pid: 2 },
+        { inicio: 200, tamano: 300, pid: null }
+    ]);
+
+    expect(simulador.consultarMetricas().memoriaLibreTotal).toBe(400);
+    expect(simulador.consultarMetricas().mayorBloqueLibre).toBe(300);
+    expect(simulador.consultarMetricas().fragmentacionExterna).toBe(25);
+});
+
+test("conserva invariantes durante un escenario con espera y E/S", () => {
+    const simulador = new Simulador(200, 1);
+    simulador.registrarProceso(
+        1, 100, 3,
+        { despuesDeCpu: 1, duracion: 2 }
+    );
+    simulador.registrarProceso(2, 100, 2);
+    simulador.registrarProceso(3, 100, 1);
+
+    for (let tick = 0; tick < 10; tick++) {
+        simulador.avanzarTick();
+        const estado = simulador.consultarEstado();
+
+        const ubicaciones = [
+            ...estado.listos,
+            ...estado.esperandoMemoria,
+            ...estado.bloqueados,
+            ...estado.terminados,
+            ...(estado.pidEnCpu === null ? [] : [estado.pidEnCpu])
+        ];
+
+        expect(new Set(ubicaciones).size).toBe(ubicaciones.length);
+        expect(ubicaciones.length).toBe(3);
+
+        expect(estado.procesos.filter(
+            proceso => proceso.estado === EstadoProceso.Ejecutando
+        )).toHaveLength(estado.pidEnCpu === null ? 0 : 1);
+
+        let finAnterior = 0;
+
+        for (const bloque of estado.memoria) {
+            expect(bloque.inicio).toBe(finAnterior);
+            expect(bloque.tamano).toBeGreaterThan(0);
+            finAnterior += bloque.tamano;
+        }
+
+        expect(finAnterior).toBe(200);
+    }
+
+    expect(simulador.consultarEstado().terminados).toHaveLength(3);
+});
