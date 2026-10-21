@@ -115,3 +115,65 @@ test("la consulta no permite modificar la cola interna", () => {
 
     expect(planificador.obtenerListos()).toEqual([1]);
 });
+test("la E/S libera CPU y tiene prioridad sobre el quantum", () => {
+    const planificador = new PlanificadorRoundRobin(1);
+    const p1 = new Proceso(1, 100, 3);
+    const p2 = new Proceso(2, 100, 2);
+
+    p1.configurarES(1, 2);
+    p1.admitir();
+    p2.admitir();
+    planificador.encolar(p1);
+    planificador.encolar(p2);
+
+    const resultado = planificador.ejecutarTick();
+
+    expect(resultado).toEqual({
+        pidEjecutado: 1,
+        pidTerminado: null,
+        cambioContexto: true
+    });
+    expect(p1.obtenerEstado()).toBe(EstadoProceso.Bloqueado);
+    expect(p1.obtenerBloqueoRestante()).toBe(2);
+    expect(planificador.obtenerPidEnCpu()).toBeNull();
+    expect(planificador.obtenerListos()).toEqual([2]);
+    expect(p2.obtenerCpuRestante()).toBe(2);
+
+    expect(planificador.ejecutarTick().pidEjecutado).toBe(2);
+});
+
+test("sin Listos la CPU queda ociosa durante el bloqueo", () => {
+    const planificador = new PlanificadorRoundRobin(2);
+    const proceso = new Proceso(1, 100, 3);
+    proceso.configurarES(1, 2);
+    proceso.admitir();
+    planificador.encolar(proceso);
+
+    planificador.ejecutarTick();
+    const resultado = planificador.ejecutarTick();
+
+    expect(resultado).toEqual({
+        pidEjecutado: null,
+        pidTerminado: null,
+        cambioContexto: false
+    });
+    expect(proceso.obtenerCpuRestante()).toBe(2);
+    expect(proceso.obtenerBloqueoRestante()).toBe(2);
+});
+
+test("al vencer el bloqueo puede volver a la cola y ejecutar", () => {
+    const planificador = new PlanificadorRoundRobin(2);
+    const proceso = new Proceso(1, 100, 3);
+    proceso.configurarES(1, 1);
+    proceso.admitir();
+    planificador.encolar(proceso);
+    planificador.ejecutarTick();
+
+    proceso.actualizarBloqueo();
+    planificador.encolar(proceso);
+    const resultado = planificador.ejecutarTick();
+
+    expect(resultado.pidEjecutado).toBe(1);
+    expect(proceso.obtenerCpuRestante()).toBe(1);
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Ejecutando);
+});

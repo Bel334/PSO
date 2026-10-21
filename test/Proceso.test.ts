@@ -257,3 +257,97 @@ test("un proceso Terminado no puede volver a Listo", () => {
 
     expect(proceso.obtenerEstado()).toBe(EstadoProceso.Terminado);
 });
+test("la E/S bloquea despues de consumir la CPU indicada", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.configurarES(1, 2);
+    proceso.admitir();
+    proceso.despachar();
+
+    proceso.ejecutarTick();
+
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Bloqueado);
+    expect(proceso.obtenerBloqueoRestante()).toBe(2);
+    expect(proceso.obtenerCpuRestante()).toBe(2);
+
+    expect(() => proceso.ejecutarTick()).toThrow();
+    expect(proceso.obtenerCpuRestante()).toBe(2);
+});
+
+test("el bloqueo vence y la E/S no vuelve a dispararse", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.configurarES(1, 2);
+    proceso.admitir();
+    proceso.despachar();
+    proceso.ejecutarTick();
+
+    proceso.actualizarBloqueo();
+
+    expect(proceso.obtenerBloqueoRestante()).toBe(1);
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Bloqueado);
+
+    proceso.actualizarBloqueo();
+
+    expect(proceso.obtenerBloqueoRestante()).toBe(0);
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Listo);
+    expect(proceso.obtenerCpuRestante()).toBe(2);
+
+    proceso.despachar();
+    proceso.ejecutarTick();
+
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Ejecutando);
+    expect(proceso.obtenerCpuRestante()).toBe(1);
+});
+
+test("la finalizacion tiene prioridad sobre la E/S", () => {
+    const proceso = new Proceso(1, 100, 1);
+    proceso.configurarES(1, 2);
+    proceso.admitir();
+    proceso.despachar();
+
+    proceso.ejecutarTick();
+
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Terminado);
+    expect(proceso.obtenerBloqueoRestante()).toBe(0);
+});
+
+test.each([
+    [0, 2],
+    [-1, 2],
+    [1.5, 2],
+    [4, 2],
+    [1, 0],
+    [1, -1],
+    [1, 1.5]
+])("rechaza evento E/S invalido (%s, %s)", (umbral, duracion) => {
+    const proceso = new Proceso(1, 100, 3);
+
+    expect(() => proceso.configurarES(umbral, duracion)).toThrow(
+        "El evento de E/S es invalido"
+    );
+    expect(proceso.obtenerEstado()).toBe(EstadoProceso.Nuevo);
+});
+
+test("rechaza configurar E/S despues de admitir", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.admitir();
+
+    expect(() => proceso.configurarES(1, 2)).toThrow(
+        "El evento de E/S es invalido"
+    );
+});
+
+test("rechaza reemplazar un evento ya configurado", () => {
+    const proceso = new Proceso(1, 100, 3);
+    proceso.configurarES(1, 2);
+
+    expect(() => proceso.configurarES(2, 1)).toThrow(
+        "El evento de E/S es invalido"
+    );
+});
+
+test("rechaza actualizar bloqueo de un proceso no bloqueado", () => {
+    const proceso = new Proceso(1, 100, 3);
+
+    expect(() => proceso.actualizarBloqueo()).toThrow();
+    expect(proceso.obtenerBloqueoRestante()).toBe(0);
+});

@@ -68,7 +68,7 @@ export class PlanificadorRoundRobin implements IPlanificador {
 
         return proceso.obtenerEstado() === EstadoProceso.Terminado
             ? this.finalizar(proceso)
-            : this.revisarQuantum(proceso);
+            : this.resolverBloqueoOQuantum(proceso);
     }
 
     private finalizar(proceso: IProceso): ResultadoTickCpu {
@@ -78,6 +78,26 @@ export class PlanificadorRoundRobin implements IPlanificador {
             pidEjecutado: proceso.obtenerPid(),
             pidTerminado: proceso.obtenerPid(),
             cambioContexto: false
+        };
+    }
+
+    private resolverBloqueoOQuantum(
+        proceso: IProceso
+    ): ResultadoTickCpu {
+        return proceso.obtenerEstado() === EstadoProceso.Bloqueado
+            ? this.liberarCpuPorBloqueo(proceso)
+            : this.revisarQuantum(proceso);
+    }
+
+    private liberarCpuPorBloqueo(
+        proceso: IProceso
+    ): ResultadoTickCpu {
+        this.actual = null;
+
+        return {
+            pidEjecutado: proceso.obtenerPid(),
+            pidTerminado: null,
+            cambioContexto: true
         };
     }
 

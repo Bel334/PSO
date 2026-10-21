@@ -5,11 +5,14 @@ export interface IProceso {
     obtenerCpuTotal(): number;
     obtenerCpuRestante(): number;
     obtenerEstado(): EstadoProceso;
+    obtenerQuantumConsumido(): number;
+    obtenerBloqueoRestante(): number;
     esperarMemoria(): void;
     admitir(): void;
     despachar(): void;
-    obtenerQuantumConsumido(): number;
-ejecutarTick(): void;
-reencolar(): void;
-renovarQuantum(): void;
+    ejecutarTick(): void;
+    reencolar(): void;
+    renovarQuantum(): void;
+    configurarES(despuesDeCpu: number, duracion: number): void;
+    actualizarBloqueo(): void;
 }
